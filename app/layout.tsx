@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import "./globals.css"
-import { montserrat } from "./(ui)/fonts"
+import { montserrat } from "./ui/fonts"
 
 export const metadata: Metadata = {
   title: "Smart Tasks Manager",

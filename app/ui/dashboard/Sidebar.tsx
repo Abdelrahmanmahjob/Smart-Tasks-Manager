@@ -1,4 +1,4 @@
-import { signOut } from "@/auth"
+import { signOut, auth } from "@/auth"
 import {
   Cog6ToothIcon,
   FolderIcon,
@@ -8,6 +8,7 @@ import {
 } from "@heroicons/react/16/solid"
 import Link from "next/link"
 import Button from "../Button"
+import { console } from "inspector"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
@@ -45,12 +46,12 @@ export default function Sidebar() {
         <form
           action={async () => {
             "use server"
-            await signOut()
+            await signOut({ redirectTo: "/login" })
           }}
         >
           <Button
             variant="ghost"
-            className="flex h-[48px] items-center gap-2 rounded-md p-3 hover:bg-red-700 "
+            className="flex h-12 items-center gap-2 rounded-md p-3 hover:bg-red-700 "
           >
             <PowerIcon className="w-6" />
             <span>Sign Out</span>

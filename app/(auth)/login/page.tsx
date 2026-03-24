@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import Button from "../../(ui)/Button"
+import Button from "../../ui/Button"
 import {
   Card,
   CardContent,
@@ -9,7 +9,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "../../(ui)/Card"
+} from "../../ui/Card"
 import { useActionState } from "react"
 import { authenticate } from "@/app/lib/actions"
 import { ExclamationCircleIcon } from "@heroicons/react/16/solid"

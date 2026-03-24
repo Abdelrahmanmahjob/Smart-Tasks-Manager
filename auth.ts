@@ -1,4 +1,3 @@
-// /auth.ts
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { authConfig } from "./auth.config"
@@ -41,7 +40,6 @@ export const { auth, signIn, signOut } = NextAuth({
 
           // 2. البحث عن المستخدم
           const user = await getUser(email)
-          console.log(user)
           if (!user) return null
 
           // 3. مقارنة كلمات السر

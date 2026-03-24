@@ -5,8 +5,8 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from "../(ui)/Card"
-import Button from "../(ui)/Button"
+} from "../ui/Card"
+import Button from "../ui/Button"
 
 export default function DashboardPage() {
   return (
