@@ -1,4 +1,6 @@
-import { signOut, auth } from "@/auth"
+"use client"
+
+import { handleSignOut } from "@/app/lib/actions"
 import {
   Cog6ToothIcon,
   FolderIcon,
@@ -6,9 +8,11 @@ import {
   ListBulletIcon,
   PowerIcon,
 } from "@heroicons/react/16/solid"
+import { clsx } from "clsx"
+import { usePathname } from "next/navigation"
+
 import Link from "next/link"
 import Button from "../Button"
-import { console } from "inspector"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
@@ -18,6 +22,8 @@ const navigation = [
 ]
 
 export default function Sidebar() {
+  const pathname = usePathname()
+
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-border-subtle bg-bg-elevated/90 px-4 py-6 backdrop-blur">
       <div className="mb-8 px-2">
@@ -30,28 +36,34 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-1">
-        {navigation.map((item) => (
-          <Link
-            key={item.name}
-            href={item.href}
-            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-brand-soft hover:text-fg-strong"
-          >
-            <item.icon className="h-5 w-5 text-fg-default/80" />
-            <span>{item.name}</span>
-          </Link>
-        ))}
+        {navigation.map((item) => {
+          const isActive = pathname === item.href
+
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={clsx(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-brand-soft hover:text-fg-strong",
+                {
+                  "bg-brand-soft text-fg-strong": isActive,
+                  "text-fg-muted": !isActive,
+                },
+              )}
+            >
+              <item.icon className="h-5 w-5 text-fg-default/80" />
+              <span>{item.name}</span>
+            </Link>
+          )
+        })}
       </nav>
 
       <div className="mt-6 border-t border-border-subtle pt-4 text-xs text-fg-muted">
-        <form
-          action={async () => {
-            "use server"
-            await signOut({ redirectTo: "/login" })
-          }}
-        >
+        <form action={handleSignOut}>
           <Button
             variant="ghost"
             className="flex h-12 items-center gap-2 rounded-md p-3 hover:bg-red-700 "
+            type="submit"
           >
             <PowerIcon className="w-6" />
             <span>Sign Out</span>

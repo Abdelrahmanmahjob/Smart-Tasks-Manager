@@ -1,11 +1,13 @@
 "use server"
 
-import { signIn } from "@/auth"
+import { signIn, signOut, auth } from "@/auth"
 import { AuthError } from "next-auth"
-import { registerSchema } from "./register-schema"
+import { registerSchema } from "./schema/register-schema"
 import { sql } from "@vercel/postgres"
 import bcrypt from "bcrypt"
 import { redirect } from "next/navigation"
+import { revalidatePath } from "next/cache"
+import { createTaskSchema, CreateTasksInput } from "./schema/createTask-schema"
 
 export async function authenticate(
   prevState: string | undefined,
@@ -83,4 +85,103 @@ export async function register(
   if (isSuccess) redirect("/dashboard")
 
   return { message: null }
+}
+
+export async function handleSignOut() {
+  await signOut({ redirectTo: "/login" })
+}
+
+// تعريف شكل حالة الرد (State) ليعرف المتصفح ما الذي سيستقبله
+export type CreateTaskState = {
+  success?: boolean
+  errors?: {
+    [K in keyof CreateTasksInput]?: string[]
+  }
+  message?: string | null
+}
+
+export async function createTask(
+  prevState: CreateTaskState,
+  formData: FormData,
+): Promise<CreateTaskState> {
+  const session = await auth()
+  const userId = session?.user?.id
+  if (!userId) return { message: "You must be logged in to create a task." }
+
+  const data = Object.fromEntries(formData)
+  const validatedFields = createTaskSchema.safeParse(data)
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Missing Fields. Failed to Create Task.",
+    }
+  }
+
+  const { title, description, status, priority, due_date, project_id } =
+    validatedFields.data
+
+  const dbProjectId = project_id === "" ? null : project_id
+
+  try {
+    await sql`
+      INSERT INTO tasks (title, description, status, priority, due_date, project_id, user_id)
+      VALUES (${title}, ${description}, ${status}, ${priority}, ${due_date}, ${dbProjectId}, ${userId});
+    `
+    revalidatePath("/dashboard/tasks")
+    return { success: true }
+  } catch (error) {
+    console.error("Database Error:", error)
+    throw new Error("Failed to create task.")
+  }
+}
+
+export async function updateTask(
+  id: string,
+  prevState: CreateTaskState,
+  formData: FormData,
+): Promise<CreateTaskState> {
+  const data = Object.fromEntries(formData)
+  const validatedFields = createTaskSchema.safeParse(data)
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Missing Fields. Failed to Update Task.",
+    }
+  }
+
+  const { title, description, status, priority, due_date, project_id } =
+    validatedFields.data
+  const dbProjectId = project_id === "" ? null : project_id
+
+  try {
+    await sql`
+    UPDATE tasks
+    SET 
+      title = ${title},
+      description = ${description},
+      status = ${status},
+      priority = ${priority},
+      due_date = ${due_date},
+      project_id = ${dbProjectId}
+    WHERE id = ${id}
+  `
+    revalidatePath("/dashboard/tasks")
+    return { success: true }
+  } catch (error) {
+    console.error("Database Error: ", error)
+    throw new Error("Failed to update task.")
+  }
+}
+
+export async function deleteTask(id: string) {
+  try {
+    await sql`DELETE FROM tasks WHERE id = ${id}`
+    revalidatePath("/dashboard/tasks")
+    return { success: true, message: "Task deleted successfully." }
+  } catch (error) {
+    console.error("Database Error: ", error)
+    throw new Error("Failed to delete task.")
+  }
 }

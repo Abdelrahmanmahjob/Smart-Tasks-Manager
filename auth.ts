@@ -52,4 +52,12 @@ export const { auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
+  callbacks: {
+    async session({ session, token }) {
+      if (token.sub && session.user) {
+        session.user.id = token.sub // token.sub هو الـ id القادم من قاعدة البيانات
+      }
+      return session
+    },
+  },
 })

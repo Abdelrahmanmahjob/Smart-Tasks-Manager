@@ -17,6 +17,7 @@
     "date-fns": "^4.1.0",
     "next": "^16.1.7",
     "next-auth": "5.0.0-beta.25",
+    "nextjs-toast-notify": "^1.58.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "recharts": "^2.15.0",
