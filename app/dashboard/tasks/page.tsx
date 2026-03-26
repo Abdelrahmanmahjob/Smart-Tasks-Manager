@@ -3,6 +3,7 @@ import { fetchUserTasks } from "@/app/lib/data"
 import Button from "@/app/ui/Button"
 import { Card } from "@/app/ui/Card"
 import DeleteTaskModal from "@/app/ui/tasks/DeleteTaskModal"
+import Search from "@/app/ui/tasks/Search"
 
 const priorityConfig = {
   high: {
@@ -46,8 +47,17 @@ const statusConfig = {
   },
 }
 
-export default async function TasksPage() {
-  const tasks = await fetchUserTasks()
+export default async function TasksPage({
+  searchParams, // ✅ Server Components تستقبل searchParams كـ prop
+}: {
+  searchParams?: {
+    search?: string
+  }
+}) {
+  const query = await searchParams
+  const search = query?.search || ""
+
+  const tasks = await fetchUserTasks({ searchTerm: search })
 
   const getStatusConfig = (status: string) => {
     return (
@@ -97,21 +107,38 @@ export default async function TasksPage() {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="max-w-7xl mx-auto mb-8">
+        <Search />
+      </div>
+
       {/* Tasks Grid */}
       <div className="max-w-7xl mx-auto">
-        {tasks.length === 0 ? (
+        {search && tasks.length === 0 ? (
           <Card className="col-span-full">
             <div className="flex flex-col items-center justify-center py-20 px-6">
               <div className="text-6xl mb-4 opacity-50">📋</div>
               <h3 className="text-2xl font-semibold text-white mb-2">
-                No Tasks Yet
+                No Tasks Found
               </h3>
               <p className="text-slate-400 text-center mb-6">
-                Start by creating a new task to organize your work
+                Try adjusting your search terms
               </p>
-              <Link href="/dashboard/tasks/create">
-                <Button variant="primary">Create Your First Task</Button>
+              <Link href={"/dashboard/tasks"}>
+                <Button variant="primary">Clear Search</Button>
               </Link>
+            </div>
+          </Card>
+        ) : tasks.length === 0 ? (
+          <Card className="col-span-full">
+            <div className="flex flex-col items-center justify-center py-20 px-6">
+              <div className="text-6xl mb-4 opacity-50">📋</div>
+              <h3 className="text-2xl font-semibold text-white mb-2">
+                No Tasks Found
+              </h3>
+              <p className="text-slate-400 text-center mb-6">
+                Try creating a new task
+              </p>
             </div>
           </Card>
         ) : (

@@ -1,7 +1,11 @@
 import { sql } from "@vercel/postgres"
 import { auth } from "@/auth"
 
-export async function fetchUserTasks() {
+export async function fetchUserTasks({
+  searchTerm = "",
+}: {
+  searchTerm?: string
+}) {
   const session = await auth()
   const userId = session?.user?.id
 
@@ -17,9 +21,9 @@ export async function fetchUserTasks() {
         tasks.due_date,
         projects.name AS project_name,
         projects.color AS project_color
-      FROM tasks
+      FROM tasks 
       LEFT JOIN projects ON tasks.project_id = projects.id
-      WHERE tasks.user_id = ${userId}
+      WHERE tasks.user_id = ${userId} AND (tasks.title ILIKE ${`%${searchTerm}%`} OR projects.name ILIKE ${`%${searchTerm}%`})
       ORDER BY tasks.created_at DESC
     `
 
