@@ -1,9 +1,10 @@
 import Link from "next/link"
-import { fetchUserTasks } from "@/app/lib/data"
+import { fetchUserTasks, fetchTasksPagesCount } from "@/app/lib/data"
 import Button from "@/app/ui/Button"
 import { Card } from "@/app/ui/Card"
 import DeleteTaskModal from "@/app/ui/tasks/DeleteTaskModal"
 import Search from "@/app/ui/tasks/Search"
+import Pagination from "@/app/ui/Pagination"
 
 const priorityConfig = {
   high: {
@@ -57,8 +58,9 @@ export default async function TasksPage({
   const query = await searchParams
   const search = query?.search || ""
 
-  const tasks = await fetchUserTasks({ searchTerm: search })
+  const tasks = await fetchUserTasks({ searchTerm: search, currentPage: 1 })
 
+  const totalPages = await fetchTasksPagesCount({ searchTerm: search })
   const getStatusConfig = (status: string) => {
     return (
       statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
@@ -227,6 +229,7 @@ export default async function TasksPage({
           </div>
         )}
       </div>
+      <Pagination totalPages={Number(totalPages)} />
     </div>
   )
 }
