@@ -1,5 +1,6 @@
 import { sql } from "@vercel/postgres"
 import { auth } from "@/auth"
+import { Project } from "./definitions"
 
 const ITEMS_PER_PAGE = 6
 export async function fetchUserTasks({
@@ -39,27 +40,6 @@ export async function fetchUserTasks({
   }
 }
 
-export async function fetchUserProjects() {
-  const session = await auth()
-  const userId = session?.user?.id
-
-  if (!userId) return []
-
-  try {
-    const data = await sql`
-        SELECT id, name, color 
-        FROM projects 
-        WHERE user_id = ${userId} 
-        ORDER BY name ASC;
-    `
-
-    return data.rows
-  } catch (error) {
-    console.error("Database Error:", error)
-    throw new Error("Failed to fetch Projects.")
-  }
-}
-
 export async function fetchTaskById(id: string) {
   try {
     const data = await sql`
@@ -95,5 +75,66 @@ export async function fetchTasksPagesCount({
   } catch (error) {
     console.error("Database Error:", error)
     throw new Error("Failed to fetch tasks pages count.")
+  }
+}
+
+export async function fetchUserProjects() {
+  const session = await auth()
+  const userId = session?.user?.id
+
+  if (!userId) return []
+
+  try {
+    const data = await sql<Project>`
+      SELECT 
+        projects.id, 
+        projects.name, 
+        projects.color,
+        COUNT(tasks.id)::int AS tasks_count
+      FROM projects 
+      LEFT JOIN tasks ON projects.id = tasks.project_id
+      WHERE projects.user_id = ${userId} 
+      GROUP BY projects.id
+      ORDER BY projects.name ASC;
+    `
+
+    return data.rows
+  } catch (error) {
+    console.error("Database Error:", error)
+    throw new Error("Failed to fetch Projects.")
+  }
+}
+
+export async function fetchProjectById(id: string) {
+  const session = await auth()
+  const userId = session?.user?.id
+
+  if (!userId) return null
+
+  try {
+    const data = await sql<Project>`
+        SELECT * FROM projects WHERE id = ${id} AND user_id = ${userId}
+    `
+    return data.rows[0]
+  } catch (error) {
+    console.error("Database Error:", error)
+    throw new Error("Failed to fetch project.")
+  }
+}
+
+export async function fetchTasksByProjectId(id: string) {
+  const session = await auth()
+  const userId = session?.user?.id
+
+  if (!userId) return []
+
+  try {
+    const data = await sql`
+       SELECT * FROM tasks WHERE project_id = ${id} AND user_id = ${userId} ORDER BY created_at DESC
+    `
+    return data.rows
+  } catch (error) {
+    console.error("Database Error:", error)
+    throw new Error("Failed to fetch tasks.")
   }
 }

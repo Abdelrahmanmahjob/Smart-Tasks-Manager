@@ -174,7 +174,7 @@ export default function EditTaskForm({ task, projects }: EditTaskFormProps) {
             </label>
             <select
               id="projectId"
-              name="projectId"
+              name="project_id"
               defaultValue={task.project_id || ""}
               className="w-full px-4 py-2.5 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
             >

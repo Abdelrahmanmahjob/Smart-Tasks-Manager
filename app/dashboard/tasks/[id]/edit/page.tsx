@@ -13,7 +13,6 @@ export default async function EditTaskPage({
     fetchUserProjects(),
   ])
 
-  console.log(task)
   if (!task) {
     return (
       <div className="flex items-center justify-center min-h-screen">

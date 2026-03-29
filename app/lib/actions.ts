@@ -7,7 +7,9 @@ import { sql } from "@vercel/postgres"
 import bcrypt from "bcrypt"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
-import { createTaskSchema, CreateTasksInput } from "./schema/createTask-schema"
+import { createTaskSchema } from "./schema/createTask-schema"
+import { CreateTaskState, ProjectState, RegisterState } from "./definitions"
+import { CreateProjectSchema } from "./schema/createProject-schema"
 
 export async function authenticate(
   prevState: string | undefined,
@@ -29,17 +31,6 @@ export async function authenticate(
     }
     throw error
   }
-}
-
-export type RegisterState = {
-  errors?: {
-    name?: string[]
-    email?: string[]
-    password?: string[]
-    confirmPassword?: string[]
-    general?: string
-  }
-  message?: string | null
 }
 
 export async function register(
@@ -89,15 +80,6 @@ export async function register(
 
 export async function handleSignOut() {
   await signOut({ redirectTo: "/login" })
-}
-
-// تعريف شكل حالة الرد (State) ليعرف المتصفح ما الذي سيستقبله
-export type CreateTaskState = {
-  success?: boolean
-  errors?: {
-    [K in keyof CreateTasksInput]?: string[]
-  }
-  message?: string | null
 }
 
 export async function createTask(
@@ -184,4 +166,40 @@ export async function deleteTask(id: string) {
     console.error("Database Error: ", error)
     throw new Error("Failed to delete task.")
   }
+}
+
+export async function createProject(
+  prevState: ProjectState,
+  formData: FormData,
+): Promise<ProjectState> {
+  const session = await auth()
+  const userId = session?.user?.id
+
+  if (!userId) throw new Error("Unauthorized")
+
+  const validatedFields = CreateProjectSchema.safeParse({
+    name: formData.get("name"),
+    color: formData.get("color"),
+  })
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Missing Fields. Failed to Create Project.",
+    }
+  }
+
+  const { name, color } = validatedFields.data
+
+  try {
+    await sql`
+      INSERT INTO projects (name, color, user_id)
+      VALUES (${name}, ${color}, ${userId})
+    `
+  } catch (error) {
+    return { message: "Database Error: Failed to Create Project." }
+  }
+
+  revalidatePath("/dashboard/projects")
+  redirect("/dashboard/projects")
 }

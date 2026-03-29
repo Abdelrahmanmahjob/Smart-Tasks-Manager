@@ -2,86 +2,28 @@ import Link from "next/link"
 import { fetchUserTasks, fetchTasksPagesCount } from "@/app/lib/data"
 import Button from "@/app/ui/Button"
 import { Card } from "@/app/ui/Card"
-import DeleteTaskModal from "@/app/ui/tasks/DeleteTaskModal"
 import Search from "@/app/ui/tasks/Search"
 import Pagination from "@/app/ui/Pagination"
-
-const priorityConfig = {
-  high: {
-    label: "High",
-    color: "bg-red-600",
-    lightColor: "bg-red-900/30",
-    textColor: "text-red-300",
-  },
-  medium: {
-    label: "Medium",
-    color: "bg-yellow-600",
-    lightColor: "bg-yellow-900/30",
-    textColor: "text-yellow-300",
-  },
-  low: {
-    label: "Low",
-    color: "bg-green-600",
-    lightColor: "bg-green-900/30",
-    textColor: "text-green-300",
-  },
-}
-
-const statusConfig = {
-  pending: {
-    label: "Pending",
-    color: "bg-slate-600",
-    textColor: "text-slate-300",
-    icon: "○",
-  },
-  in_progress: {
-    label: "In Progress",
-    color: "bg-indigo-600",
-    textColor: "text-indigo-300",
-    icon: "⟳",
-  },
-  completed: {
-    label: "Completed",
-    color: "bg-green-600",
-    textColor: "text-green-300",
-    icon: "✓",
-  },
-}
+import TasksContainer from "@/app/ui/tasks/TasksContainer"
 
 export default async function TasksPage({
   searchParams, // ✅ Server Components تستقبل searchParams كـ prop
 }: {
   searchParams?: {
     search?: string
+    page?: string
   }
 }) {
   const query = await searchParams
   const search = query?.search || ""
+  const currentPage = query?.page ? Number(query.page) : 1
 
-  const tasks = await fetchUserTasks({ searchTerm: search, currentPage: 1 })
+  const tasks = await fetchUserTasks({
+    searchTerm: search,
+    currentPage: currentPage,
+  })
 
   const totalPages = await fetchTasksPagesCount({ searchTerm: search })
-  const getStatusConfig = (status: string) => {
-    return (
-      statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
-    )
-  }
-
-  const getPriorityConfig = (priority: string) => {
-    return (
-      priorityConfig[priority as keyof typeof priorityConfig] ||
-      priorityConfig.low
-    )
-  }
-
-  const formatDate = (date: string | null) => {
-    if (!date) return "No deadline"
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
-  }
 
   return (
     <div className="min-h-screen bg-slate-950 py-8 px-4 sm:px-6 lg:px-8">
@@ -89,8 +31,8 @@ export default async function TasksPage({
       <div className="max-w-7xl mx-auto mb-12">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-tight">
-              My Tasks
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Tasks
             </h1>
             <p className="mt-2 text-slate-400 text-lg">
               {tasks.length} task{tasks.length !== 1 ? "s" : ""}
@@ -131,102 +73,8 @@ export default async function TasksPage({
               </Link>
             </div>
           </Card>
-        ) : tasks.length === 0 ? (
-          <Card className="col-span-full">
-            <div className="flex flex-col items-center justify-center py-20 px-6">
-              <div className="text-6xl mb-4 opacity-50">📋</div>
-              <h3 className="text-2xl font-semibold text-white mb-2">
-                No Tasks Found
-              </h3>
-              <p className="text-slate-400 text-center mb-6">
-                Try creating a new task
-              </p>
-            </div>
-          </Card>
         ) : (
-          <div className="grid gap-4 md:gap-6">
-            {tasks.map((task) => {
-              const taskStatus = getStatusConfig(task.status)
-              const taskPriority = getPriorityConfig(task.priority)
-
-              return (
-                <Card
-                  key={task.id}
-                  className="group hover:shadow-lg transition-all duration-300 overflow-hidden"
-                >
-                  <div className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    {/* Task Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start gap-4">
-                        {/* Status Indicator */}
-                        <div
-                          className={`mt-1 shrink-0 w-10 h-10 rounded-full ${taskStatus.color} flex items-center justify-center text-white font-bold text-lg`}
-                        >
-                          {taskStatus.icon}
-                        </div>
-
-                        {/* Task Details */}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-semibold text-white truncate group-hover:text-slate-100 transition-colors">
-                            {task.title}
-                          </h3>
-
-                          <div className="mt-3 flex flex-wrap items-center gap-3">
-                            {/* Project Badge */}
-                            {task.project_name && (
-                              <span
-                                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white"
-                                style={{
-                                  backgroundColor:
-                                    task.project_color || "#6366f1",
-                                }}
-                              >
-                                {task.project_name}
-                              </span>
-                            )}
-
-                            {/* Date */}
-                            <span className="text-xs text-slate-400 flex items-center gap-1">
-                              📅 {formatDate(task.due_date)}
-                            </span>
-
-                            {/* Status Badge */}
-                            <span
-                              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${taskStatus.color} ${taskStatus.textColor}`}
-                            >
-                              {taskStatus.label}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Priority Badge */}
-                    <div className="shrink-0">
-                      <div
-                        className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${taskPriority.lightColor} ${taskPriority.textColor}`}
-                      >
-                        <span
-                          className={`w-2 h-2 rounded-full mr-2 ${taskPriority.color}`}
-                        ></span>
-                        {taskPriority.label}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Hover Action Bar */}
-                  <div className="hidden sm:flex gap-3 px-6 py-3 bg-slate-700/30 border-t border-slate-600 group-hover:bg-slate-700/50 transition-colors">
-                    <Link href={`/dashboard/tasks/${task.id}/edit`}>
-                      <Button variant="ghost" size="sm">
-                        Edit
-                      </Button>
-                    </Link>
-                    <DeleteTaskModal taskId={task.id} taskTitle={task.title} />
-                  </div>
-                </Card>
-              )
-            })}
-          </div>
+          <TasksContainer tasks={tasks} />
         )}
       </div>
       <Pagination totalPages={Number(totalPages)} />
