@@ -203,3 +203,55 @@ export async function createProject(
   revalidatePath("/dashboard/projects")
   redirect("/dashboard/projects")
 }
+
+export async function updateProject(
+  id: string,
+  prevState: ProjectState,
+  formData: FormData,
+): Promise<ProjectState> {
+  const data = Object.fromEntries(formData)
+  const validatedFieleds = CreateProjectSchema.safeParse(data)
+
+  if (!validatedFieleds.success) {
+    return {
+      errors: validatedFieleds.error.flatten().fieldErrors,
+      message: "Missing Fields. Failed to Update Project.",
+    }
+  }
+  const { name, color } = validatedFieleds.data
+
+  const session = await auth()
+  const userId = session?.user?.id
+
+  if (!userId) throw new Error("Unauthorized")
+
+  try {
+    await sql`
+      UPDATE projects
+      SET name = ${name}, color = ${color}
+      WHERE id = ${id} AND user_id = ${userId}
+    `
+  } catch (error) {
+    return { message: "Database Error: Failed to Update Project." }
+  }
+  revalidatePath("/dashboard/projects")
+  revalidatePath(`/dashboard/projects/${id}/detail`)
+
+  redirect(`/dashboard/projects/${id}/detail`)
+}
+
+export async function deleteProject(id: string) {
+  const session = await auth()
+  const userId = session?.user?.id
+
+  if (!userId) throw new Error("Unauthorized")
+  try {
+    await sql`DELETE FROM projects WHERE id = ${id} AND user_id = ${userId}`
+
+    revalidatePath("/dashboard/projects")
+  } catch (error) {
+    return { message: "Database Error: Failed to Delete Project." }
+  }
+
+  redirect("/dashboard/projects")
+}

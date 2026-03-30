@@ -1,14 +1,22 @@
 import Link from "next/link"
-import { ArrowLeftIcon, FolderIcon } from "@heroicons/react/24/outline"
+import { ArrowLeftIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline"
 import { fetchProjectById, fetchTasksByProjectId } from "@/app/lib/data"
 import TasksContainer from "@/app/ui/tasks/TasksContainer"
+import EditProjectModal from "@/app/ui/projects/EditProjectModal"
+import { PencilSquareIcon } from "@heroicons/react/24/outline"
+import DeleteProjectModal from "@/app/ui/projects/DeleteProjectModal"
 
 export default async function ProjectDetailsPage({
   params,
+  searchParams,
 }: {
   params: { id: string }
+  searchParams?: { edit?: string; delete?: string }
 }) {
   const { id } = await params
+  const query = await searchParams
+  const isEditing = query?.edit === "true"
+  const isDeleting = query?.delete === "true"
 
   const project = await fetchProjectById(id)
   const tasks = await fetchTasksByProjectId(id)
@@ -53,6 +61,25 @@ export default async function ProjectDetailsPage({
                 {tasks.length.toString().padStart(2, "0")}
               </p>
             </div>
+            <Link
+              href={`/dashboard/projects/${id}/detail?edit=true`}
+              className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all"
+            >
+              <PencilSquareIcon className="w-5 h-5" />
+            </Link>
+            <Link
+              href={`/dashboard/projects/${id}/detail?delete=true`}
+              className="p-3 bg-red-900/20 hover:bg-red-900/40 text-red-500 rounded-xl transition-all border border-red-900/30"
+            >
+              <TrashIcon className="w-5 h-5" />
+            </Link>
+
+            <Link
+              href={`/dashboard/tasks/create?project_id=${project?.id}`}
+              className="p-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all shadow-lg"
+            >
+              <PlusIcon className="w-5 h-5" />
+            </Link>
           </div>
         </div>
       </div>
@@ -60,6 +87,8 @@ export default async function ProjectDetailsPage({
       <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 min-h-100">
         <TasksContainer tasks={tasks} />
       </div>
+      {isEditing && <EditProjectModal project={project} />}
+      {isDeleting && <DeleteProjectModal id={id} name={project?.name} />}
     </main>
   )
 }

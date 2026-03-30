@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import Button from "../ui/Button"
+import Button from "../Button"
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline"
 import { useState } from "react"
 

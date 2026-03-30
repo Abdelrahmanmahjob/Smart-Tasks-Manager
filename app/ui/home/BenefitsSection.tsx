@@ -1,5 +1,5 @@
 import { CheckCircleIcon } from "@heroicons/react/24/outline"
-import { Card } from "../ui/Card"
+import { Card } from "../Card"
 import { BENEFITS, PERKS } from "./constants"
 
 export default function BenefitsSection() {

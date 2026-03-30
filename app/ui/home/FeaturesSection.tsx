@@ -1,4 +1,4 @@
-import { Card } from "../ui/Card"
+import { Card } from "../Card"
 import { FEATURES } from "./constants"
 
 export default function FeaturesSection() {

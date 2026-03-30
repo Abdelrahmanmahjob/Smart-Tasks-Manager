@@ -1,9 +1,9 @@
-import Navigation from "./home/Navigation"
-import HeroSection from "./home/HeroSection"
-import FeaturesSection from "./home/FeaturesSection"
-import BenefitsSection from "./home/BenefitsSection"
-import CTASection from "./home/CTASection"
-import Footer from "./home/Footer"
+import Navigation from "./ui/home/Navigation"
+import HeroSection from "./ui/home/HeroSection"
+import FeaturesSection from "./ui/home/FeaturesSection"
+import BenefitsSection from "./ui/home/BenefitsSection"
+import CTASection from "./ui/home/CTASection"
+import Footer from "./ui/home/Footer"
 
 export default function HomePage() {
   return (
