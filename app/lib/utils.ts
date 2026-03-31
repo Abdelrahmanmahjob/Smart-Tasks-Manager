@@ -1,3 +1,6 @@
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
 export const generatePagination = (currentPage: number, totalPages: number) => {
   // 1. لو عدد الصفحات 7 أو أقل، اعرضهم كلهم بدون نقاط
   if (totalPages <= 7) {
@@ -27,4 +30,8 @@ export const generatePagination = (currentPage: number, totalPages: number) => {
     "...",
     totalPages,
   ]
+}
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
 }

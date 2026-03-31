@@ -8,8 +8,15 @@ import bcrypt from "bcrypt"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { createTaskSchema } from "./schema/createTask-schema"
-import { CreateTaskState, ProjectState, RegisterState } from "./definitions"
+import {
+  CreateTaskState,
+  ProfileState,
+  ProjectState,
+  RegisterState,
+} from "./definitions"
 import { CreateProjectSchema } from "./schema/createProject-schema"
+import { profileSchema } from "./schema/profile-schema"
+import { put } from "@vercel/blob"
 
 export async function authenticate(
   prevState: string | undefined,
@@ -254,4 +261,50 @@ export async function deleteProject(id: string) {
   }
 
   redirect("/dashboard/projects")
+}
+
+export async function updateProfile(
+  prevState: ProfileState,
+  formData: FormData,
+): Promise<ProfileState> {
+  const session = await auth()
+  const userId = session?.user?.id
+  if (!userId) throw new Error("Unauthorized")
+
+  const data = Object.fromEntries(formData)
+  const validatedFields = profileSchema.safeParse(data)
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Missing Fields. Failed to Update Profile.",
+    }
+  }
+
+  const name = validatedFields.data.name ?? null
+  const file = formData.get("avatar") as File
+  let uploadedUrl = null
+
+  if (file && file.size > 0) {
+    const blob = await put(file.name, file, {
+      access: "public",
+    })
+    uploadedUrl = blob.url
+  }
+
+  try {
+    await sql`
+    UPDATE users
+    SET 
+      name = COALESCE(${name}, name),
+      avatar_url = COALESCE(${uploadedUrl}, avatar_url)
+    WHERE id = ${userId}
+  `
+
+    revalidatePath("/dashboard/settings/profile")
+    return { message: "Profile updated successfully." }
+  } catch (error) {
+    console.error(error)
+    return { message: "Database Error: Failed to Update Profile." }
+  }
 }

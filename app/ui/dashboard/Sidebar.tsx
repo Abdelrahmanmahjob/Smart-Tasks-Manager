@@ -18,7 +18,11 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
   { name: "Projects", href: "/dashboard/projects", icon: FolderIcon },
   { name: "Tasks", href: "/dashboard/tasks", icon: ListBulletIcon },
-  { name: "Settings", href: "/dashboard/settings", icon: Cog6ToothIcon },
+  {
+    name: "Settings",
+    href: "/dashboard/settings",
+    icon: Cog6ToothIcon,
+  },
 ]
 
 export default function Sidebar() {
@@ -37,7 +41,11 @@ export default function Sidebar() {
 
       <nav className="flex-1 space-y-1">
         {navigation.map((item) => {
-          const isActive = pathname === item.href
+          const isDashboardHome = item.href === "/dashboard"
+
+          const isActive = isDashboardHome
+            ? pathname === item.href
+            : pathname.startsWith(item.href)
 
           return (
             <Link

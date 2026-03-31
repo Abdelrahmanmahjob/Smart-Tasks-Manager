@@ -1,5 +1,6 @@
 import { CreateProjectsInput } from "./schema/createProject-schema"
 import { CreateTasksInput } from "./schema/createTask-schema"
+import { ProfileData } from "./schema/profile-schema"
 
 export type RegisterState = {
   errors?: {
@@ -31,6 +32,14 @@ export interface Project {
 export type ProjectState = {
   errors?: {
     [K in keyof CreateProjectsInput]?: string[]
+  }
+  message?: string | null
+}
+
+export type ProfileState = {
+  success?: boolean
+  errors?: {
+    [K in keyof ProfileData]?: string[]
   }
   message?: string | null
 }
