@@ -13,10 +13,15 @@ import {
   ProfileState,
   ProjectState,
   RegisterState,
+  UpdateEmailState,
+  UpdatePasswordState,
 } from "./definitions"
 import { CreateProjectSchema } from "./schema/createProject-schema"
 import { profileSchema } from "./schema/profile-schema"
 import { put } from "@vercel/blob"
+import { updateEmailSchema } from "./schema/updateEmail-schema"
+import { updatePasswordSchema } from "./schema/updatePassword-schema"
+import { console } from "inspector"
 
 export async function authenticate(
   prevState: string | undefined,
@@ -306,5 +311,94 @@ export async function updateProfile(
   } catch (error) {
     console.error(error)
     return { message: "Database Error: Failed to Update Profile." }
+  }
+}
+
+export async function updateEmail(
+  prevState: UpdateEmailState,
+  formData: FormData,
+): Promise<UpdateEmailState> {
+  const session = await auth()
+  const userId = session?.user?.id
+  if (!userId) throw new Error("Unauthorized")
+  const data = formData.get("email") as string
+  const validatedEmail = updateEmailSchema.safeParse({ email: data })
+  if (!validatedEmail.success) {
+    return {
+      errors: validatedEmail.error.flatten().fieldErrors,
+      message: "Invalid Email. Failed to Update Email.",
+    }
+  }
+  const email = validatedEmail.data.email
+
+  try {
+    await sql`
+    UPDATE users
+    SET email = ${email}
+    WHERE id = ${userId}
+  `
+    revalidatePath("/dashboard/settings/account")
+    return { success: true, message: "Email updated successfully." }
+  } catch (error: any) {
+    if (error.code === "23505") {
+      return { success: false, message: "This email is already taken." }
+    }
+    return {
+      success: false,
+      message: "Something went wrong. Please try again.",
+    }
+  }
+}
+
+export async function updatePassword(
+  prevState: UpdatePasswordState,
+  formData: FormData,
+): Promise<UpdatePasswordState> {
+  const session = await auth()
+  const userId = session?.user?.id
+  if (!userId) throw new Error("Unauthorized")
+
+  const data = Object.fromEntries(formData)
+  const validatedFields = updatePasswordSchema.safeParse(data)
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Missing Fields. Failed to Update Password.",
+    }
+  }
+
+  const oldPassword = await sql`SELECT password FROM users WHERE id = ${userId}`
+  console.log("Old: ", oldPassword)
+  const isMatch = await bcrypt.compare(
+    validatedFields.data.currentPassword,
+    oldPassword.rows[0].password,
+  )
+  console.log("isMatch: ", isMatch)
+  if (!isMatch) {
+    return {
+      success: false,
+      message: "Current password is incorrect.",
+    }
+  }
+
+  const newPasswordHash = await bcrypt.hash(
+    validatedFields.data.newPassword,
+    10,
+  )
+
+  try {
+    await sql`
+    UPDATE users
+    SET password = ${newPasswordHash}
+    WHERE id = ${userId}
+  `
+    revalidatePath("/dashboard/settings/account")
+    return { success: true, message: "Password updated successfully." }
+  } catch (error) {
+    console.error(error)
+    return {
+      success: false,
+      message: "Something went wrong. Please try again.",
+    }
   }
 }

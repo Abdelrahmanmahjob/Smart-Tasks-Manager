@@ -1,6 +1,8 @@
+import { UpdateEmailInput } from "./schema/updateEmail-schema"
 import { CreateProjectsInput } from "./schema/createProject-schema"
 import { CreateTasksInput } from "./schema/createTask-schema"
 import { ProfileData } from "./schema/profile-schema"
+import { UpdatePasswordInput } from "./schema/updatePassword-schema"
 
 export type RegisterState = {
   errors?: {
@@ -40,6 +42,22 @@ export type ProfileState = {
   success?: boolean
   errors?: {
     [K in keyof ProfileData]?: string[]
+  }
+  message?: string | null
+}
+
+export type UpdateEmailState = {
+  success?: boolean
+  errors?: {
+    [K in keyof UpdateEmailInput]?: string[]
+  }
+  message?: string | null
+}
+
+export type UpdatePasswordState = {
+  success?: boolean
+  errors?: {
+    [K in keyof UpdatePasswordInput]?: string[]
   }
   message?: string | null
 }
